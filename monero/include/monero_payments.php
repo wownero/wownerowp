@@ -407,6 +407,9 @@ public function add_my_currency_symbol( $currency_symbol, $currency ) {
         	$wallet_amount_unlocked = $this->monero_daemon->getbalance_unlocked();
 			if(!isset($wallet_amount)){
 				$this->log->add('Monero_gateway','[ERROR] Connection with daemon absent');
+				$wallet_amount['balance'] = "0";
+		$wallet_amount['unlocked_balance'] = "0";
+
 			}
         	$real_wallet_amount = $wallet_amount / 1000000000000;
         	$real_amount_rounded = round($real_wallet_amount, 6);
