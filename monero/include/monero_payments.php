@@ -278,10 +278,18 @@ public function add_my_currency_symbol( $currency_symbol, $currency ) {
 						$payment_id  = bin2hex(openssl_random_pseudo_bytes(8));
 						setcookie('payment_id', $payment_id, time()+2700);
 					}
-					else
-						$payment_id = $_COOKIE['payment_id'];
+					else{
+						$payment_id = $this->sanatize_id($_COOKIE['payment_id']);
+					}
 					return $payment_id;
 				}
+	
+	 public function sanatize_id($payment_id)
+    {
+        // Limit payment id to alphanumeric characters
+        $sanatized_id = preg_replace("/[^a-zA-Z0-9]+/", "", $payment_id);
+	return $sanatized_id;
+    }
 				public function instruction($order_id)
 				{
 								$order       = wc_get_order($order_id);
