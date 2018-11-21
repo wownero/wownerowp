@@ -1,9 +1,9 @@
 <?php
 /**
- * monero_explorer_tools.php
+ * wownero_explorer_tools.php
  *
  * Uses CURL to call API functions from the block explorer
- * https://xmrchain.net/
+ * https://explore.wownero.com/
  *
  * @author Serhack
  * @author cryptochangements
@@ -13,7 +13,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-class Monero_Explorer_Tools
+class Wownero_Explorer_Tools
 {
     private $url;
     public function __construct($testnet = false)

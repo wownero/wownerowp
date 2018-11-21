@@ -1,0 +1,14 @@
+[Unit]
+Description=Wownero Full Node
+After=network.target
+
+[Service]
+User=wowneroservices
+Group=wowneroservices
+WorkingDirectory=/opt/wownero-data-dir
+Type=simple
+LimitNOFILE=65535
+ExecStart=/usr/bin/wownerod --log-file /var/log/wownerod.log --data-dir /opt/wownero-data-dir --non-interactive
+Restart=always
+[Install]
+WantedBy=multi-user.target

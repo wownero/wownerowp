@@ -1,0 +1,14 @@
+[Unit]
+Description=Wownero Wallet RPC
+After=network.target wownerod.service
+
+[Service]
+User=wowneroservices
+Group=wowneroservices
+WorkingDirectory=/opt/wownero-wallets
+Type=simple
+ExecStart=/opt/wownero-bin/wownero-wallet-rpc --wallet-file /opt/wownero-wallets/woocommerce --rpc-bind-port 18080 --password-file /opt/wownero-wallets/woocommerce.password --disable-rpc-login --log-file /var/log/wownero-wallet.log
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

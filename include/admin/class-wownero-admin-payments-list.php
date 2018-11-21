@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright (c) 2018, Ryo Currency Project
- * Admin interface for Monero gateway
+ * Admin interface for Wownero gateway
  * Authors: mosu-forge
  */
 
@@ -9,7 +9,7 @@ if(!class_exists('WP_List_Table')) {
     require_once( ABSPATH . 'wp-admin/includes/class-wp-list-table.php');
 }
 
-class Monero_Admin_Payments_List extends WP_List_Table {
+class Wownero_Admin_Payments_List extends WP_List_Table {
 
     function __construct() {
         parent::__construct(array(
@@ -54,8 +54,8 @@ class Monero_Admin_Payments_List extends WP_List_Table {
             } else {
                 $tab_info['all']['active'] = 'class="current" aria-current="page"';
             }
-            if(Monero_Gateway::get_confirm_type() == 'monero-wallet-rpc') {
-                $balance = Monero_Gateway::admin_balance_info();
+            if(Wownero_Gateway::get_confirm_type() == 'wownero-wallet-rpc') {
+                $balance = Wownero_Gateway::admin_balance_info();
                 $balance_info = <<<HTML
 <div style="border:1px solid #ddd;padding:5px 10px;">
     Wallet height: {$balance['height']}</br>
@@ -69,37 +69,37 @@ HTML;
             }
             echo <<<HTML
             <div class="wrap">
-                <h1 class="wp-heading-inline">Monero Payments</h1>
+                <h1 class="wp-heading-inline">Wownero Payments</h1>
                 $balance_info
                 <hr class="wp-header-end">
                 <ul class="subsubsub">
                     <li>
-                        <a href="?page=monero_gateway_payments&type=all" {$tab_info['all']['active']}>
+                        <a href="?page=wownero_gateway_payments&type=all" {$tab_info['all']['active']}>
                             All <span class="count">({$tab_info['all']['count']})</span>
                         </a> |
                     </li>
                     <li style="display:none">
-                        <a href="?page=monero_gateway_payments&type=pending" {$tab_info['pending']['active']}>
+                        <a href="?page=wownero_gateway_payments&type=pending" {$tab_info['pending']['active']}>
                             Pending <span class="count">({$tab_info['pending']['count']})</span>
                         </a> |
                     </li>
                     <li>
-                        <a href="?page=monero_gateway_payments&type=paid" {$tab_info['paid']['active']}>
+                        <a href="?page=wownero_gateway_payments&type=paid" {$tab_info['paid']['active']}>
                             Received <span class="count">({$tab_info['paid']['count']})</span>
                         </a> |
                     </li>
                     <li>
-                        <a href="?page=monero_gateway_payments&type=confirmed" {$tab_info['confirmed']['active']}>
+                        <a href="?page=wownero_gateway_payments&type=confirmed" {$tab_info['confirmed']['active']}>
                             Confirmed <span class="count">({$tab_info['confirmed']['count']})</span>
                         </a> |
                     </li>
                     <li>
-                        <a href="?page=monero_gateway_payments&type=expired" {$tab_info['expired']['active']}>
+                        <a href="?page=wownero_gateway_payments&type=expired" {$tab_info['expired']['active']}>
                             Expired <span class="count">({$tab_info['expired']['count']})</span>
                         </a>
                     </li>
                 </ul>
-                <form id="monero-payments-filter" method="get" style="display:none">
+                <form id="wownero-payments-filter" method="get" style="display:none">
                     <p class="search-box">
                         <label class="screen-reader-text" for="post-search-input">Search payments:</label>
                         <input type="search" id="post-search-input" name="s" value="">
@@ -107,7 +107,7 @@ HTML;
                     </p>
                     $hidden_fields
                 </form>
-                <h2 class="screen-reader-text">Monero Payments List</h2>
+                <h2 class="screen-reader-text">Wownero Payments List</h2>
                 <style>
                     #col_order_id { width: 150px; }
                     #col_payment_id { width: 150px; }
@@ -145,7 +145,7 @@ HTML;
             echo $item->height;
             break;
         case 'col_amount':
-            echo Monero_Gateway::format_monero($item->amount).' Monero';
+            echo Wownero_Gateway::format_wownero($item->amount).' Wownero';
             break;
         }
     }
@@ -200,7 +200,7 @@ HTML;
     }
 
     public function no_items() {
-        esc_html_e('No Monero payments found', 'monero_gateway');
+        esc_html_e('No Wownero payments found', 'wownero_gateway');
     }
 
     protected function get_filter_vars() {
@@ -212,8 +212,8 @@ HTML;
 
     protected function get_item_count($type) {
         global $wpdb;
-        $table_name_1 = $wpdb->prefix.'monero_gateway_quotes';
-        $table_name_2 = $wpdb->prefix.'monero_gateway_quotes_txids';
+        $table_name_1 = $wpdb->prefix.'wownero_gateway_quotes';
+        $table_name_2 = $wpdb->prefix.'wownero_gateway_quotes_txids';
         $query_where = ' WHERE 1=1 '.$this->get_clause_type($type);
         $query = "SELECT COUNT(*) AS count FROM {$table_name_2} t2 LEFT JOIN $table_name_1 t1 ON t2.payment_id = t1.payment_id {$query_where}";
         $item_count = $wpdb->get_var($query);
@@ -249,8 +249,8 @@ HTML;
         $this->items = array();
         $filters = $this->get_filter_vars();
 
-        $table_name_1 = $wpdb->prefix.'monero_gateway_quotes';
-        $table_name_2 = $wpdb->prefix.'monero_gateway_quotes_txids';
+        $table_name_1 = $wpdb->prefix.'wownero_gateway_quotes';
+        $table_name_2 = $wpdb->prefix.'wownero_gateway_quotes_txids';
 
         $query_where = ' WHERE 1=1 ';
 

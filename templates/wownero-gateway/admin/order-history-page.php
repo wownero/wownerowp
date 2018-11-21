@@ -1,23 +1,23 @@
 <table class="striped" style="width:100%" cellspacing="0" cellpadding="5">
     <tr>
         <td>Exchange rate</td>
-        <td>1 XMR = <?php echo $details['rate_formatted'].' '.$details['currency']; ?></td>
+        <td>1 WOW = <?php echo $details['rate_formatted'].' '.$details['currency']; ?></td>
     </tr>
     <tr>
         <td>Total amount</td>
-        <td><?php echo $details['amount_total_formatted']; ?> XMR</td>
+        <td><?php echo $details['amount_total_formatted']; ?> WOW</td>
     </tr>
     <tr>
         <td>Total paid</td>
-        <td><?php echo $details['amount_paid_formatted']; ?> XMR</td>
+        <td><?php echo $details['amount_paid_formatted']; ?> WOW</td>
     </tr>
     <tr>
         <td>Total due</td>
-        <td><?php echo $details['amount_due_formatted']; ?> XMR</td>
+        <td><?php echo $details['amount_due_formatted']; ?> WOW</td>
     </tr>
     <tr>
         <td>Order age</td>
-        <td><?php echo Monero_Gateway::format_seconds_to_time($details['order_age']) ?> ago</td>
+        <td><?php echo Wownero_Gateway::format_seconds_to_time($details['order_age']) ?> ago</td>
     </tr>
     <tr>
         <td>Order exipires</td>
