@@ -75,7 +75,7 @@ return array(
         'title' => __('Wownero wallet RPC port', 'wownero_gateway'),
         'type' => __('number'),
         'desc_tip' => __('This is the Wallet RPC port to authorize the payment with', 'wownero_gateway'),
-        'default' => '18080',
+        'default' => '28080',
     ),
     'testnet' => array(
         'title' => __(' Testnet', 'wownero_gateway'),
