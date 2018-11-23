@@ -283,11 +283,11 @@ class Wownero_Gateway extends WC_Payment_Gateway
             $rates = $price['rates'];
             $table_name = $wpdb->prefix.'wownero_gateway_live_rates';
             //usd
-            $rate = intval($usd * 1e11);
+            $rate = intval($usd * 1e8);
             $query = $wpdb->prepare("INSERT INTO $table_name (currency, rate, updated) VALUES (%s, %d, NOW()) ON DUPLICATE KEY UPDATE rate=%d, updated=NOW()", array('USD', $rate, $rate));
             $wpdb->query($query);
             //btc
-            $rate = intval($btc * 1e11);
+            $rate = intval($btc * 1e8);
             $query = $wpdb->prepare("INSERT INTO $table_name (currency, rate, updated) VALUES (%s, %d, NOW()) ON DUPLICATE KEY UPDATE rate=%d, updated=NOW()", array('BTC', $rate, $rate));
             $wpdb->query($query);
 
