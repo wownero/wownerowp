@@ -63,7 +63,7 @@
             </strong>
         </li>
         <li>
-            Exchange rate:<strong id="wownero_exchange_rate"></strong>
+            Exchange rate: <strong id="wownero_exchange_rate"></strong>
         </li>
     </ul>
 
