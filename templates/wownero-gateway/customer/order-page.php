@@ -95,6 +95,6 @@
 <script type="text/javascript">
     var wownero_show_qr = <?php echo $show_qr ? 'true' : 'false'; ?>;
     var wownero_ajax_url = '<?php echo $ajax_url; ?>';
-    var wownero_explorer_url = '<?php echo MONERO_GATEWAY_EXPLORER_URL; ?>';
+    var wownero_explorer_url = '<?php echo WOWNERO_GATEWAY_EXPLORER_URL; ?>';
     var wownero_details = <?php echo $details_json; ?>;
 </script>

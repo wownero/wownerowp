@@ -18,7 +18,7 @@ class Wownero_Explorer_Tools
     private $url;
     public function __construct($testnet = false)
     {
-        $this->url = $testnet ? MONERO_GATEWAY_TESTNET_EXPLORER_URL : MONERO_GATEWAY_MAINNET_EXPLORER_URL;
+        $this->url = $testnet ? WOWNERO_GATEWAY_TESTNET_EXPLORER_URL : WOWNERO_GATEWAY_MAINNET_EXPLORER_URL;
     }
 
     private function call_api($endpoint)

@@ -13,19 +13,19 @@ Author URI: https://monerointegrations.com/
 defined( 'ABSPATH' ) || exit;
 
 // Constants, you can edit these if you fork this repo
-define('MONERO_GATEWAY_MAINNET_EXPLORER_URL', 'https://explore.wownero.com/');
-define('MONERO_GATEWAY_TESTNET_EXPLORER_URL', 'http://explorer.wowne.ro:8082/');
-define('MONERO_GATEWAY_ADDRESS_PREFIX', 0x12);
-define('MONERO_GATEWAY_ADDRESS_PREFIX_INTEGRATED', 0x13);
-define('MONERO_GATEWAY_ATOMIC_UNITS', 11);
-define('MONERO_GATEWAY_ATOMIC_UNIT_THRESHOLD', 10); // Amount under in atomic units payment is valid
-define('MONERO_GATEWAY_DIFFICULTY_TARGET', 120);
+define('WOWNERO_GATEWAY_MAINNET_EXPLORER_URL', 'https://explore.wownero.com/');
+define('WOWNERO_GATEWAY_TESTNET_EXPLORER_URL', 'http://explorer.wowne.ro:8082/');
+define('WOWNERO_GATEWAY_ADDRESS_PREFIX', 0x12);
+define('WOWNERO_GATEWAY_ADDRESS_PREFIX_INTEGRATED', 0x13);
+define('WOWNERO_GATEWAY_ATOMIC_UNITS', 11);
+define('WOWNERO_GATEWAY_ATOMIC_UNIT_THRESHOLD', 10); // Amount under in atomic units payment is valid
+define('WOWNERO_GATEWAY_DIFFICULTY_TARGET', 120);
 
 // Do not edit these constants
-define('MONERO_GATEWAY_PLUGIN_DIR', plugin_dir_path(__FILE__));
-define('MONERO_GATEWAY_PLUGIN_URL', plugin_dir_url(__FILE__));
-define('MONERO_GATEWAY_ATOMIC_UNITS_POW', pow(10, MONERO_GATEWAY_ATOMIC_UNITS));
-define('MONERO_GATEWAY_ATOMIC_UNITS_SPRINTF', '%.'.MONERO_GATEWAY_ATOMIC_UNITS.'f');
+define('WOWNERO_GATEWAY_PLUGIN_DIR', plugin_dir_path(__FILE__));
+define('WOWNERO_GATEWAY_PLUGIN_URL', plugin_dir_url(__FILE__));
+define('WOWNERO_GATEWAY_ATOMIC_UNITS_POW', pow(10, WOWNERO_GATEWAY_ATOMIC_UNITS));
+define('WOWNERO_GATEWAY_ATOMIC_UNITS_SPRINTF', '%.'.WOWNERO_GATEWAY_ATOMIC_UNITS.'f');
 
 // Include our Gateway Class and register Payment Gateway with WooCommerce
 add_action('plugins_loaded', 'wownero_init', 1);
@@ -157,11 +157,11 @@ function wownero_init() {
         if(Wownero_Gateway::use_wownero_price())
             wp_dequeue_script('wc-cart-fragments');
         if(Wownero_Gateway::use_qr_code())
-            wp_enqueue_script('wownero-qr-code', MONERO_GATEWAY_PLUGIN_URL.'assets/js/qrcode.min.js');
+            wp_enqueue_script('wownero-qr-code', WOWNERO_GATEWAY_PLUGIN_URL.'assets/js/qrcode.min.js');
 
-        wp_enqueue_script('wownero-clipboard-js', MONERO_GATEWAY_PLUGIN_URL.'assets/js/clipboard.min.js');
-        wp_enqueue_script('wownero-gateway', MONERO_GATEWAY_PLUGIN_URL.'assets/js/wownero-gateway-order-page.js');
-        wp_enqueue_style('wownero-gateway', MONERO_GATEWAY_PLUGIN_URL.'assets/css/wownero-gateway-order-page.css');
+        wp_enqueue_script('wownero-clipboard-js', WOWNERO_GATEWAY_PLUGIN_URL.'assets/js/clipboard.min.js');
+        wp_enqueue_script('wownero-gateway', WOWNERO_GATEWAY_PLUGIN_URL.'assets/js/wownero-gateway-order-page.js');
+        wp_enqueue_style('wownero-gateway', WOWNERO_GATEWAY_PLUGIN_URL.'assets/css/wownero-gateway-order-page.css');
     }
 
     // [wownero-price currency="USD"]
@@ -187,7 +187,7 @@ function wownero_init() {
 
     // [wownero-accepted-here]
     function wownero_accepted_func() {
-        return '<img src="'.MONERO_GATEWAY_PLUGIN_URL.'assets/images/wownero-accepted-here.png" />';
+        return '<img src="'.WOWNERO_GATEWAY_PLUGIN_URL.'assets/images/wownero-accepted-here.png" />';
     }
     add_shortcode('wownero-accepted-here', 'wownero_accepted_func');
 
@@ -209,7 +209,7 @@ function wownero_install() {
     if($wpdb->get_var("show tables like '$table_name'") != $table_name) {
         $sql = "CREATE TABLE $table_name (
                order_id BIGINT(20) UNSIGNED NOT NULL,
-               payment_id VARCHAR(16) DEFAULT '' NOT NULL,
+               payment_id VARCHAR(100) DEFAULT '' NOT NULL,
                currency VARCHAR(6) DEFAULT '' NOT NULL,
                rate BIGINT UNSIGNED DEFAULT 0 NOT NULL,
                amount BIGINT UNSIGNED DEFAULT 0 NOT NULL,
@@ -226,7 +226,7 @@ function wownero_install() {
     if($wpdb->get_var("show tables like '$table_name'") != $table_name) {
         $sql = "CREATE TABLE $table_name (
                id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-               payment_id VARCHAR(16) DEFAULT '' NOT NULL,
+               payment_id VARCHAR(100) DEFAULT '' NOT NULL,
                txid VARCHAR(64) DEFAULT '' NOT NULL,
                amount BIGINT UNSIGNED DEFAULT 0 NOT NULL,
                height MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,

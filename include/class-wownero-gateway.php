@@ -28,7 +28,7 @@ class Wownero_Gateway extends WC_Payment_Gateway
     private static $onion_service = false;
     private static $show_qr = false;
     private static $use_wownero_price = false;
-    private static $use_wownero_price_decimals = MONERO_GATEWAY_ATOMIC_UNITS;
+    private static $use_wownero_price_decimals = WOWNERO_GATEWAY_ATOMIC_UNITS;
 
     private static $cryptonote;
     private static $wownero_wallet_rpc;
@@ -41,7 +41,7 @@ class Wownero_Gateway extends WC_Payment_Gateway
 
     public function get_icon()
     {
-        return apply_filters('woocommerce_gateway_icon', '<img src="'.MONERO_GATEWAY_PLUGIN_URL.'assets/images/wownero-icon.png"/>');
+        return apply_filters('woocommerce_gateway_icon', '<img src="'.WOWNERO_GATEWAY_PLUGIN_URL.'assets/images/wownero-icon.png"/>');
     }
 
     function __construct($add_action=true)
@@ -83,8 +83,8 @@ class Wownero_Gateway extends WC_Payment_Gateway
         self::$use_wownero_price = $this->settings['use_wownero_price'] == 'yes';
         self::$use_wownero_price_decimals = $this->settings['use_wownero_price_decimals'];
 
-        $explorer_url = self::$testnet ? MONERO_GATEWAY_TESTNET_EXPLORER_URL : MONERO_GATEWAY_MAINNET_EXPLORER_URL;
-        defined('MONERO_GATEWAY_EXPLORER_URL') || define('MONERO_GATEWAY_EXPLORER_URL', $explorer_url);
+        $explorer_url = self::$testnet ? WOWNERO_GATEWAY_TESTNET_EXPLORER_URL : WOWNERO_GATEWAY_MAINNET_EXPLORER_URL;
+        defined('WOWNERO_GATEWAY_EXPLORER_URL') || define('WOWNERO_GATEWAY_EXPLORER_URL', $explorer_url);
 
         if($add_action)
             add_action('woocommerce_update_options_payment_gateways_'.$this->id, array($this, 'process_admin_options'));
@@ -153,7 +153,7 @@ class Wownero_Gateway extends WC_Payment_Gateway
 
         $settings_html = $this->generate_settings_html(array(), false);
         $errors = array_merge(self::$_errors, $this->admin_php_module_check(), $this->admin_ssl_check());
-        include MONERO_GATEWAY_PLUGIN_DIR . '/templates/wownero-gateway/admin/settings-page.php';
+        include WOWNERO_GATEWAY_PLUGIN_DIR . '/templates/wownero-gateway/admin/settings-page.php';
     }
 
     public static function admin_balance_info()
@@ -208,12 +208,24 @@ class Wownero_Gateway extends WC_Payment_Gateway
 
         $order = wc_get_order($order_id);
 
-        // Generate a unique payment id
-        do {
-            $payment_id = bin2hex(openssl_random_pseudo_bytes(8));
-            $query = $wpdb->prepare("SELECT COUNT(*) FROM $table_name WHERE payment_id=%s", array($payment_id));
-            $payment_id_used = $wpdb->get_var($query);
-        } while ($payment_id_used);
+        if(self::$confirm_type != 'wownero-wallet-rpc') {
+          // Generate a unique payment id
+          do {
+              $payment_id = bin2hex(openssl_random_pseudo_bytes(8));
+              $query = $wpdb->prepare("SELECT COUNT(*) FROM $table_name WHERE payment_id=%s", array($payment_id));
+              $payment_id_used = $wpdb->get_var($query);
+          } while ($payment_id_used);
+        }
+        else {
+          // Generate subaddress
+          $payment_id = self::$wownero_wallet_rpc->create_address(0, 'Order: ' . $order_id);
+          if(isset($payment_id['address'])) {
+            $payment_id = $payment_id['address'];
+          }
+          else {
+            $this->log->add('Wownero_Gateway', 'Couldn\'t create subaddress for order ' . $order_id);
+          }
+        }
 
         $currency = $order->get_currency();
         $rate = self::get_live_rate($currency);
@@ -223,8 +235,7 @@ class Wownero_Gateway extends WC_Payment_Gateway
         if(self::$discount)
             $wownero_amount = $wownero_amount - $wownero_amount * self::$discount / 100;
 
-        $wownero_amount = intval($wownero_amount * MONERO_GATEWAY_ATOMIC_UNITS_POW);
-
+        $wownero_amount = intval($wownero_amount * WOWNERO_GATEWAY_ATOMIC_UNITS_POW);
         $query = $wpdb->prepare("INSERT INTO $table_name (order_id, payment_id, currency, rate, amount) VALUES (%d, %s, %s, %d, %d)", array($order_id, $payment_id, $currency, $rate, $wownero_amount));
         $wpdb->query($query);
 
@@ -303,10 +314,12 @@ class Wownero_Gateway extends WC_Payment_Gateway
 
 
         // Get current network/wallet height
-        if(self::$confirm_type == 'wownero-wallet-rpc')
+        if(self::$confirm_type == 'wownero-wallet-rpc') {
             $height = self::$wownero_wallet_rpc->getheight();
-        else
+        }
+        else {
             $height = self::$wownero_explorer_tools->getheight();
+        }
         set_transient('wownero_gateway_network_height', $height);
 
         // Get pending payments
@@ -368,7 +381,7 @@ class Wownero_Gateway extends WC_Payment_Gateway
                 $heights[] = $tx->height;
             }
 
-            $paid = $amount_paid > $amount_wownero - MONERO_GATEWAY_ATOMIC_UNIT_THRESHOLD;
+            $paid = $amount_paid > $amount_wownero - WOWNERO_GATEWAY_ATOMIC_UNIT_THRESHOLD;
 
             if($paid) {
                 if(self::$confirms == 0) {
@@ -425,13 +438,32 @@ class Wownero_Gateway extends WC_Payment_Gateway
     protected static function check_payment_rpc($payment_id)
     {
         $txs = array();
-        $payments = self::$wownero_wallet_rpc->get_all_payments($payment_id);
-        foreach($payments as $payment) {
-            $txs[] = array(
-                'amount' => $payment['amount'],
-                'txid' => $payment['tx_hash'],
-                'height' => $payment['block_height']
-            );
+        $address_index = self::$wownero_wallet_rpc->get_address_index($payment_id);
+        if(isset($address_index['index']['minor'])){
+          $address_index = $address_index['index']['minor'];
+        }
+        else {
+          self::$log->add('Wownero_Gateway', '[ERROR] Couldn\'t get address index of subaddress: ' . $payment_id);
+          return $txs;
+        }
+        $payments = self::$wownero_wallet_rpc->get_transfers(array( 'in' => true, 'pool' => true, 'subaddr_indices' => array($address_index)));
+        if(isset($payments['in'])) {
+          foreach($payments['in'] as $payment) {
+              $txs[] = array(
+                  'amount' => $payment['amount'],
+                  'txid' => $payment['txid'],
+                  'height' => $payment['height']
+              );
+          }
+        }
+        if(isset($payments['pool'])) {
+          foreach($payments['pool'] as $payment) {
+              $txs[] = array(
+                  'amount' => $payment['amount'],
+                  'txid' => $payment['txid'],
+                  'height' => $payment['height']
+              );
+          }
         }
         return $txs;
     }
@@ -495,7 +527,7 @@ class Wownero_Gateway extends WC_Payment_Gateway
             } else {
                 $blocks_to_confirm = self::$confirms;
             }
-            $time_to_confirm = self::format_seconds_to_time($blocks_to_confirm * MONERO_GATEWAY_DIFFICULTY_TARGET);
+            $time_to_confirm = self::format_seconds_to_time($blocks_to_confirm * WOWNERO_GATEWAY_DIFFICULTY_TARGET);
 
             $amount_total = $details[0]->amount_total;
             $amount_due = max(0, $amount_total - $amount_paid);
@@ -510,13 +542,7 @@ class Wownero_Gateway extends WC_Payment_Gateway
             $payment_id = self::sanatize_id($details[0]->payment_id);
 
             if(self::$confirm_type == 'wownero-wallet-rpc') {
-                $array_integrated_address = self::$wownero_wallet_rpc->make_integrated_address($payment_id);
-                if (isset($array_integrated_address['integrated_address'])) {
-                    $integrated_addr = $array_integrated_address['integrated_address'];
-                } else {
-                    self::$log->add('Wownero_Gateway', '[ERROR] Unable get integrated address');
-                    return '[ERROR] Unable get integrated address';
-                }
+                $integrated_addr = $payment_id;
             } else {
                 if ($address) {
                     $decoded_address = self::$cryptonote->decode_address($address);
@@ -625,10 +651,10 @@ class Wownero_Gateway extends WC_Payment_Gateway
         $details = self::get_payment_details($order);
         if(!is_array($details)) {
             $error = $details;
-            include MONERO_GATEWAY_PLUGIN_DIR . '/templates/wownero-gateway/admin/order-history-error-page.php';
+            include WOWNERO_GATEWAY_PLUGIN_DIR . '/templates/wownero-gateway/admin/order-history-error-page.php';
             return;
         }
-        include MONERO_GATEWAY_PLUGIN_DIR . '/templates/wownero-gateway/admin/order-history-page.php';
+        include WOWNERO_GATEWAY_PLUGIN_DIR . '/templates/wownero-gateway/admin/order-history-page.php';
     }
 
     public static function customer_order_page($order)
@@ -647,13 +673,13 @@ class Wownero_Gateway extends WC_Payment_Gateway
         $details = self::get_payment_details($order_id);
         if(!is_array($details)) {
             $error = $details;
-            include MONERO_GATEWAY_PLUGIN_DIR . '/templates/wownero-gateway/customer/order-error-page.php';
+            include WOWNERO_GATEWAY_PLUGIN_DIR . '/templates/wownero-gateway/customer/order-error-page.php';
             return;
         }
         $show_qr = self::$show_qr;
         $details_json = json_encode($details);
         $ajax_url = WC_AJAX::get_endpoint('wownero_gateway_payment_details');
-        include MONERO_GATEWAY_PLUGIN_DIR . '/templates/wownero-gateway/customer/order-page.php';
+        include WOWNERO_GATEWAY_PLUGIN_DIR . '/templates/wownero-gateway/customer/order-page.php';
     }
 
     public static function customer_order_email($order)
@@ -671,10 +697,10 @@ class Wownero_Gateway extends WC_Payment_Gateway
         $method_title = self::$_title;
         $details = self::get_payment_details($order_id);
         if(!is_array($details)) {
-            include MONERO_GATEWAY_PLUGIN_DIR . '/templates/wownero-gateway/customer/order-email-error-block.php';
+            include WOWNERO_GATEWAY_PLUGIN_DIR . '/templates/wownero-gateway/customer/order-email-error-block.php';
             return;
         }
-        include MONERO_GATEWAY_PLUGIN_DIR . '/templates/wownero-gateway/customer/order-email-block.php';
+        include WOWNERO_GATEWAY_PLUGIN_DIR . '/templates/wownero-gateway/customer/order-email-block.php';
     }
 
     public static function get_id()
@@ -701,7 +727,7 @@ class Wownero_Gateway extends WC_Payment_Gateway
     public static function convert_wc_price($price, $currency)
     {
         $rate = self::get_live_rate($currency);
-        $wownero_amount = intval(MONERO_GATEWAY_ATOMIC_UNITS_POW * 1e8 * $price / $rate) / MONERO_GATEWAY_ATOMIC_UNITS_POW;
+        $wownero_amount = intval(WOWNERO_GATEWAY_ATOMIC_UNITS_POW * 1e8 * $price / $rate) / WOWNERO_GATEWAY_ATOMIC_UNITS_POW;
         $wownero_amount_formatted = sprintf('%.'.self::$use_wownero_price_decimals.'f', $wownero_amount);
 
         return <<<HTML
@@ -732,8 +758,8 @@ HTML;
         $price = array_pop($matches);
         $currency = $payment_details['currency'];
         $rate = $payment_details['rate'];
-        $wownero_amount = intval(MONERO_GATEWAY_ATOMIC_UNITS_POW * 1e8 * $price / $rate) / MONERO_GATEWAY_ATOMIC_UNITS_POW;
-        $wownero_amount_formatted = sprintf('%.'.MONERO_GATEWAY_ATOMIC_UNITS.'f', $wownero_amount);
+        $wownero_amount = intval(WOWNERO_GATEWAY_ATOMIC_UNITS_POW * 1e8 * $price / $rate) / WOWNERO_GATEWAY_ATOMIC_UNITS_POW;
+        $wownero_amount_formatted = sprintf('%.'.WOWNERO_GATEWAY_ATOMIC_UNITS.'f', $wownero_amount);
 
         return <<<HTML
             <span class="woocommerce-Price-amount amount" data-price="$price" data-currency="$currency"
@@ -784,7 +810,7 @@ HTML;
     }
 
     public static function format_wownero($atomic_units) {
-        return sprintf(MONERO_GATEWAY_ATOMIC_UNITS_SPRINTF, $atomic_units / MONERO_GATEWAY_ATOMIC_UNITS_POW);
+        return sprintf(WOWNERO_GATEWAY_ATOMIC_UNITS_SPRINTF, $atomic_units / WOWNERO_GATEWAY_ATOMIC_UNITS_POW);
     }
 
     public static function format_seconds_to_time($seconds)

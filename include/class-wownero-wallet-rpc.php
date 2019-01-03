@@ -244,9 +244,9 @@ class Wownero_Wallet_Rpc
         return $incoming_transfers;
     }
 
-    public function get_transfers($input_type, $input_value)
+    public function get_transfers($arr)
     {
-        $get_parameters = array($input_type => $input_value);
+        $get_parameters = $arr;//array($input_type => $input_value);
         $get_transfers = $this->_run('get_transfers', $get_parameters);
         return $get_transfers;
     }
@@ -282,7 +282,7 @@ class Wownero_Wallet_Rpc
     public function make_uri($address, $amount, $recipient_name = null, $description = null)
     {
         // Convert to atomic units
-        $new_amount = $amount * MONERO_GATEWAY_ATOMIC_UNITS_POW;
+        $new_amount = $amount * WOWNERO_GATEWAY_ATOMIC_UNITS_POW;
 
         $uri_params = array('address' => $address, 'amount' => $new_amount, 'payment_id' => '', 'recipient_name' => $recipient_name, 'tx_description' => $description);
         $uri = $this->_run('make_uri', $uri_params);
@@ -298,7 +298,7 @@ class Wownero_Wallet_Rpc
 
     public function transfer($amount, $address, $mixin = 12)
     {
-        $new_amount = $amount * MONERO_GATEWAY_ATOMIC_UNITS_POW;
+        $new_amount = $amount * WOWNERO_GATEWAY_ATOMIC_UNITS_POW;
         $destinations = array('amount' => $new_amount, 'address' => $address);
         $transfer_parameters = array('destinations' => array($destinations), 'mixin' => $mixin, 'get_tx_key' => true, 'unlock_time' => 0, 'payment_id' => '');
         $transfer_method = $this->_run('transfer', $transfer_parameters);
@@ -348,5 +348,32 @@ class Wownero_Wallet_Rpc
         $get_bulk_payments_parameters = array('payment_id' => $payment_id, 'min_block_height' => $min_block_height);
         $get_bulk_payments = $this->_run('get_bulk_payments', $get_bulk_payments_parameters);
         return $get_bulk_payments;
+    }
+
+    public function get_address($account_index = 0, $address_index = 0)
+    {
+        $params = array('account_index' => $account_index, 'address_index' => $address_index);
+        return $this->_run('get_address', $params);
+    }
+    public function get_address_index($subaddress)
+    {
+        $params = array('address' => $subaddress);
+        return $this->_run('get_address_index', $params);
+    }
+    public function get_balance($account_index = 0, $address_index = 0)
+    {
+        $params = array('account_index' => $account_index, 'address_indices'=> $address_index);
+        return $this->_run('get_balance', $params);
+    }
+    public function store()
+    {
+        return $this->_run('store');
+    }
+    public function create_address($account_index = 0, $label = '')
+    {
+        $params = array('account_index' => $account_index, 'label' => $label);
+        $create_address_method = $this->_run('create_address', $params);
+        $save = $this->store(); // Save wallet state after subaddress creation
+        return $create_address_method;
     }
 }

@@ -20,8 +20,8 @@ class Wownero_Cryptonote
     {
         $this->ed25519 = new ed25519();
         $this->base58 = new Wownero_base58();
-        $this->address_prefix = MONERO_GATEWAY_ADDRESS_PREFIX;
-        $this->address_prefix_integrated = MONERO_GATEWAY_ADDRESS_PREFIX_INTEGRATED;
+        $this->address_prefix = WOWNERO_GATEWAY_ADDRESS_PREFIX;
+        $this->address_prefix_integrated = WOWNERO_GATEWAY_ADDRESS_PREFIX_INTEGRATED;
     }
 
     /*

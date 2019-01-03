@@ -52,7 +52,7 @@ class Wownero_Admin_Interface {
             'manage_woocommerce',
             'wownero_gateway',
             array($this, 'orders_page'),
-            MONERO_GATEWAY_PLUGIN_URL.'/assets/images/wownero-icon-admin.png',
+            WOWNERO_GATEWAY_PLUGIN_URL.'/assets/images/wownero-icon-admin.png',
             56 // Position on menu, woocommerce has 55.5, products has 55.6
         );
 
